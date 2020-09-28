@@ -35,7 +35,22 @@ class SoftmaxPolicy(object):
 	def select_action(self, state):
 		state = torch.FloatTensor(state.reshape(1, -1))
 		action_probs = self.actor(state).detach().numpy()
-
+		
 		# sample action from action probability distribution
 		action = np.random.choice(self.output_dim, p=action_probs.flatten())
-		return action
+		log_prob = torch.log(action_probs.squeeze(0)[action])
+		return action, log_prob
+	
+	def train(self, replay_buffer, iterations, batch_size, discount, tau=None, policy_freq=None):
+		debug = {"loss": 0}
+
+		for it in range(iterations):
+			# Sample replay buffer stochastically
+			state, next_state, action, reward, log_prob, done = replay_buffer.sample(batch_size)
+			state = torch.FloatTensor(state)
+			next_state = torch.FloatTensor(next_state)
+			action = torch.FloatTensor(action)
+			reward = torch.FloatTensor(reward)
+			log_prob = torch.FloatTensor(log_prob)
+			done = torch.FloatTensor(1-done)
+

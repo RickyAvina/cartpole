@@ -13,7 +13,7 @@ def train(agent, env):
 		collect_one_trajectory(agent=agent, env=env)
 
 		# Update policy
-		#agent.update_policy(total_timesteps=total_timesteps)
+		agent.update_policy()
 	
 
 def collect_one_trajectory(agent, env):
@@ -27,7 +27,7 @@ def collect_one_trajectory(agent, env):
 	while True:
 		env.render()
 		# Select Action
-		agent_action = agent.select_stochastic_action(np.array(env_observation))
+		agent_action, log_prob = agent.select_stochastic_action(np.array(env_observation))
 		
 		# Take action
 		new_env_observation, env_reward, done, _ = env.step(copy.deepcopy(agent_action)) 
@@ -38,6 +38,7 @@ def collect_one_trajectory(agent, env):
 			new_obs=new_env_observation,
 			action=agent_action,
 			reward=env_reward,
+			log_prob=log_prob,
 			done=done)
 	
 		# Set vars for next timestep

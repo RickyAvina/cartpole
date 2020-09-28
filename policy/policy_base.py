@@ -2,10 +2,12 @@ from policy.SoftmaxPolicy import SoftmaxPolicy
 
 
 class PolicyBase(object):
-	def __init__(self, env):
+	def __init__(self, env, name, args=None):
 		super(PolicyBase, self).__init__()
 		
 		self.env = env
+		self.name = name
+		self.args = args
 
 	def set_dim(self):
 		raise NotImplementedError()

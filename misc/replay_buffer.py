@@ -27,7 +27,7 @@ class ReplayBuffer(object):
 	
 	def add(self, data):
 		'''
-		data: (state, next_state, action, reward, done)
+		data: (state, next_state, action, reward, log_prob, done)
 		'''
 
 		if len(self.storage) > 1e5:
@@ -36,14 +36,17 @@ class ReplayBuffer(object):
 		
 	def sample(self, batch_size):
 		ind = np.random.randint(0, len(self.storage), size=batch_size)
-		x, y, u, r, d = [], [], [], [], []
+		states, next_states, actions, rewards, log_probs, dones = [], [], [], [], [], []
 
 		for i in ind:
-			X, Y, U, R, D = self.storage[i]
-			x.append(np.array(X, copy=False))
-			y.append(np.array(Y, copy=False))
-			u.append(np.array(U, copy=False))
-			r.append(np.array(R, copy=False))
-			d.append(np.array(D, copy=False))
+			state, next_state, action, reward, log_prob, done = self.storage[i]
+			states.append(np.array(state, copy=False))
+			next_states.append(np.array(next_state, copy=False))
+			actions.append(np.array(action, copy=False))
+			rewards.append(np.array(reward, copy=False))
+			log_probs.append(np.arary(reward, copy=False))
+			dones.append(np.array(done, copy=False))
 
-		return np.array(x), np.array(y), np.array(u), np.array(r).reshape(-1, 1), np.array(d).reshpe(-1, 1)
+		return np.array(states), np.array(next_states), np.array(actions),\
+			   np.array(rewards).reshape(-1, 1), np.array(log_probs).reshape(-1, 1),\
+			   np.array(dones).reshape(-1, 1)

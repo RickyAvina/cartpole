@@ -4,8 +4,8 @@ from policy.policy_base import PolicyBase
 
 
 class Agent(PolicyBase):
-	def __init__(self, env):
-		super(Agent, self).__init__(env=env)
+	def __init__(self, env, name, args):
+		super(Agent, self).__init__(env=env, name=name, args=args)
 		
 		self.set_dim()
 		self.set_policy()
@@ -17,18 +17,24 @@ class Agent(PolicyBase):
 		# do some logging here
 	
 	def select_deterministic_action(self, obs):
-		action = self.policy.select_action(obs)
+		action, log_prob = self.policy.select_action(obs)
 		assert not np.isnan(action).any()
 		return action
 
 	def select_stochastic_action(self, obs):
 		# Get probabilities for different actions
-		action = self.policy.select_action(obs)
+		action, log_prob = self.policy.select_action(obs)
 		assert not np.isnan(action).any()
-		return action
+		return action, log_prob
 
 	def add_memory(self, obs, new_obs, action, reward, done):
 		self.memory.add((obs, new_obs, action, reward, done))
 
 	def update_policy(self):
-		raise NotImplementedError()
+		if len(self.memory) > self.args.ep_max_timesteps:
+			debug = self.policy.train(
+				replay_buffer=self.memory,
+				iterations=self.args.ep_max_timesteps,
+				batch_size=self.args.batch_size,
+				discount=self.args.discount,
+				tau=self.args.tau)
