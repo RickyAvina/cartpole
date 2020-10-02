@@ -19,7 +19,8 @@ class PolicyBase(object):
 		self.policy = SoftmaxPolicy(
 			input_dim=self.input_dim,
 			output_dim=self.output_dim,
-			n_hidden=5	# generalize later
+			n_hidden=5,	# generalize later,
+			args=self.args
 			)
 	
 	def save_weight(self, filename, directory):

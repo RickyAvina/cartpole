@@ -27,8 +27,8 @@ class Agent(PolicyBase):
 		assert not np.isnan(action).any()
 		return action, log_prob
 
-	def add_memory(self, obs, new_obs, action, reward, done):
-		self.memory.add((obs, new_obs, action, reward, done))
+	def add_memory(self, obs, new_obs, action, reward, log_prob, done):
+		self.memory.add((obs, new_obs, action, reward, log_prob, done))
 
 	def update_policy(self):
 		if len(self.memory) > self.args.ep_max_timesteps:

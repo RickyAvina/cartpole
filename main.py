@@ -47,7 +47,7 @@ if __name__ == "__main__":
 		"--ep_max_timesteps", default=100, type=int,
 		help="Maximum timesteps for each episode")
 	parser.add_argument(
-		"--actor-lr", default=0.0001, type=float,
+		"--lr", default=0.0001, type=float,
 		help="Learning rate for actor")
 	parser.add_argument(
 		"--n-hidden", default=200, type=int,

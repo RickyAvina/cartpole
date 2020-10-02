@@ -26,12 +26,13 @@ def collect_one_trajectory(agent, env):
 
 	while True:
 		env.render()
+		
 		# Select Action
 		agent_action, log_prob = agent.select_stochastic_action(np.array(env_observation))
 		
 		# Take action
 		new_env_observation, env_reward, done, _ = env.step(copy.deepcopy(agent_action)) 
-		
+
 		# Add experience to memory
 		agent.add_memory(
 			obs=env_observation,
