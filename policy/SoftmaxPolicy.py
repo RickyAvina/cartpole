@@ -6,6 +6,7 @@ import math
 from torch.distributions import Categorical
 
 
+eps = np.finfo(np.float32).eps.item()
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
@@ -14,13 +15,17 @@ class Actor(nn.Module):
 		super(Actor, self).__init__()
 		
 		setattr(self, name+"_l1", nn.Linear(input_dim, n_hidden))
-		setattr(self, name+"_l2", nn.Linear(n_hidden, output_dim))
-
+		setattr(self, name+"_drop", nn.Dropout(p=0.6))
+		setattr(self, name+"_l2", nn.Linear(n_hidden, n_hidden))
+		setattr(self, name+"_l3", nn.Linear(n_hidden, output_dim))
+		
 		self.name = name
 
 	def forward(self, x):
 		x = F.relu(getattr(self, self.name+"_l1")(x))
+		x = getattr(self, self.name+"_drop")(x)
 		x = F.relu(getattr(self, self.name+"_l2")(x))
+		x = F.softmax(getattr(self, self.name+"_l3")(x), dim=1)
 
 		return x
 
@@ -30,6 +35,7 @@ class SoftmaxPolicy(object):
 		self.output_dim = output_dim
 
 		self.actor = Actor(input_dim, output_dim, n_hidden, name)
+		
 		self.optimizer = torch.optim.Adam(self.actor.parameters(), lr=args.lr)
 		self.name = name
 	
@@ -37,57 +43,57 @@ class SoftmaxPolicy(object):
 		state = torch.FloatTensor(state.reshape(1, -1))
 
 		# Run forward pass through nn
-		nn_out = self.actor(state)
-
-		# Get action probabilities
-		action_probs = F.softmax(nn_out, dim=1)
+		action_probs = self.actor(state)
 
 		# sample action from action probability distribution
 		m = Categorical(action_probs)
 		action = m.sample()
 
+		# don't detatch
 		# return action and log probability
-		return action.item(), m.log_prob(action).detach().numpy()[0]
+		return action.item(), m.log_prob(action)
 	
+	
+	def get_policy_loss(self, log_probs, rewards, discount):
+		returns = []
+		R = 0
+		for r in rewards[::-1]:
+			R = r + discount*R
+			returns.insert(0,R)
+
+		returns = torch.tensor(returns)	
+		# normalize returns
+		returns = (returns - returns.mean())/(returns.std()+eps)
+		policy_loss = []		
+
+		for log_prob, R in zip(log_probs, returns):
+			policy_loss.append(-log_prob*R)
+		return policy_loss
+
+
 	def train(self, replay_buffer, iterations, batch_size, discount, tau=None, policy_freq=None):
 		debug = {"loss": 0}
 
-		for it in range(iterations):
+		for it in range(1):
 			# Sample replay buffer stochastically
-			state, next_state, action, reward, log_prob, done = replay_buffer.sample(batch_size)
-			states = torch.tensor(state, requires_grad=True)
-			next_states = torch.tensor(next_state, requires_grad=True)
-			actions = torch.tensor(action, requires_grad=False)
-			rewards = torch.tensor(reward, requires_grad=True)
-			log_probs = torch.tensor(log_prob, requires_grad=True)
-			dones = torch.tensor(1-done, requires_grad=False)
-
-			# find return
-			discounted_rewards = self.get_discounted_rewards(rewards, discount)
-
-			policy_loss = []
-
-			# calculate loss
-			for log_prob, R in zip(log_probs, discounted_rewards):
-				policy_loss.append(-log_prob*R)
-
+			rewards, log_probs = replay_buffer.sample()
+			
+			policy_loss = self.get_policy_loss(log_probs, rewards, discount)
 			self.optimizer.zero_grad()
 			policy_loss = torch.cat(policy_loss).sum()
 			policy_loss.backward()
 			self.optimizer.step()
+			# clear memory	
+			
+			debug["loss"] = policy_loss.cpu().data.item()
+			print("Train loss: {}".format(debug['loss']))
+		
+		return debug
 
-	def get_discounted_rewards(self, rewards, discount):
-		discounted_rewards = []
-		for t in range(len(rewards)):
-			Gt = 0
-			pw = 0
-			for reward in rewards[t:]:
-				Gt += discount**pw * reward
-				pw += 1
-			discounted_rewards.append(Gt)
-
-		discounted_rewards = torch.tensor(discounted_rewards)
-
-		# normalize and subtract from mean
-		discounted_rewards = (discounted_rewards - discounted_rewards.mean()) / (discounted_rewards.std() + np.finfo(np.float32).eps.item())
-		return discounted_rewards
+	
+	def save(self, filename, directory):
+		torch.save(self.actor.state_dict(), directory+filename+".pth")
+	
+	def load(self, filename, directory):
+		path = directory + filename + ".pth"		
+		self.actor.load_state_dict(torch.load(path))

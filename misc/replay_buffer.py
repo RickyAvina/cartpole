@@ -34,19 +34,17 @@ class ReplayBuffer(object):
 			self.storage.pop(0)
 		self.storage.append(data)
 		
-	def sample(self, batch_size):
-		ind = np.random.randint(0, len(self.storage), size=batch_size)
-		states, next_states, actions, rewards, log_probs, dones = [], [], [], [], [], []
+	def sample(self):
+		# return reward arrays
+		if len(self) == 0:
+			print("EMPTY SAMPLE")
+			return [], []
+		# right now there is only one thing in here
+		
+		rewards, log_probs = [], []
+		for sample in self.storage:
+			rewards.append(sample[3])
+			log_probs.append(sample[4])
 
-		for i in ind:
-			state, next_state, action, reward, log_prob, done = self.storage[i]
-			states.append(state)
-			next_states.append(next_state)
-			actions.append(action)
-			rewards.append(reward)
-			log_probs.append(log_prob)
-			dones.append(done)
-
-		return np.array(states), np.array(next_states), np.array(actions),\
-			   np.array(rewards).reshape(-1, 1), np.array(log_probs).reshape(-1, 1),\
-			   np.array(dones).reshape(-1, 1)
+		return rewards, log_probs 
+		
