@@ -28,10 +28,8 @@ def test(agent, env, log, tb_writer, args):
         ep_reward += env_reward
     
         if done:
-            #log[args.log_name].info("Test episode reward {}".format(ep_reward))
             tb_writer.add_scalars("reward", {"train_reward": ep_reward}, 0)
             ep_reward = 0
-            ep_time_steps = 0
             obs = env.reset()
 
 
@@ -51,7 +49,7 @@ def train(agent, env, log, tb_writer, args):
 
         # Save model every 5 updates
         if (running_reward >= 195.0):
-            agent.save_weight(os.getcwd()+"/pytorch_models/", "model"+str(total_eps))
+            agent.save_weight(os.getcwd() + "/pytorch_models/", "model" + str(total_eps))
             print("Saved model {}!".format(total_eps))
 
 
@@ -69,7 +67,7 @@ def collect_one_trajectory(agent, env, log, tb_writer, args):
     obs = env.reset()
 
     while True:
-        #env.render()
+        # env.render()
         
         # Select Action
         agent_action, log_prob = agent.select_stochastic_action(np.array(obs))
@@ -97,10 +95,9 @@ def collect_one_trajectory(agent, env, log, tb_writer, args):
             total_eps += 1
             running_reward = 0.05 * ep_reward + (1 - 0.05) * running_reward
             
-            #log[args.log_name].info("Train episode reward {} at episode {}".format(ep_reward, total_eps))
             tb_writer.add_scalar("reward/train", ep_reward, total_eps)
             tb_writer.add_scalar("reward/running", running_reward, total_eps)
-            if running_reward > 50:
-                print("Running reward: {}".format(running_reward))
-
-            return ep_reward    
+            tb_writer.add_scalars("reward", {"ep_reward": ep_reward}, total_eps)
+            tb_writer.add_scalars("reward", {"running_reward": running_reward}, total_eps)
+            log[args.log_name].info("Episodic reward: {}".format(ep_reward))
+            break

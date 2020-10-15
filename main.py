@@ -17,8 +17,8 @@ def main(args):
         os.makedirs("./pytorch_models")
     
     # Set logging
-    tb_writer = SummaryWriter('./logs/tb_{0}'.format(args.log_name))
     log = set_log(args)
+    tb_writer = SummaryWriter('./logs/tb_{0}'.format(args.log_name))
 
     # Create env
     env = make_env(args)
