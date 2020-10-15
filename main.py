@@ -35,7 +35,7 @@ def main(args):
 	# load agent
 	# agent.load_weight("pytorch_models/", "model20")
 	if args.test == 1:
-		agent.load_weight("pytorch_models/", "model280646")
+		agent.load_weight("pytorch_models/", "wmodel1")
 		test(agent=agent, env=env, log=log, tb_writer=tb_writer, args=args)
 	else:
 		# Start train

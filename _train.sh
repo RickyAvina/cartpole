@@ -35,4 +35,4 @@ cd $DIR
 python3.6 main.py \
 --prefix "" \
 --n_hidden 128 \
---test 1  
+--test ${1:-0}  
