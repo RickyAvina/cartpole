@@ -106,6 +106,8 @@ venv.bak/
 
 # Folder
 logs/
+logs/*
 venv/
 notebook/data/
 pytorch_models/
+.idea/
