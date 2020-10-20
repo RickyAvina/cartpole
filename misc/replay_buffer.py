@@ -1,26 +1,21 @@
 class ReplayBuffer(object):
     def __init__(self):
-        self.storage = []
-    
+        self.rewards = []
+        self.log_probs = []
+
     def __len__(self):
-        return len(self.storage)
+        assert len(self.log_probs) == len(self.rewards)
+        return len(self.rewards)
 
     def clear(self):
-        self.storage.clear()
-        assert len(self.storage) == 0
-    
-    def add(self, data):
-        # TODO Directly store reward and logprobs
-        # So that you do not need to use for loop below
-        self.storage.append(data)
-        
-    def sample(self):
-        if len(self) == 0:
-            raise ValueError("Should not be here")
+        self.rewards.clear()
+        self.log_probs.clear()
+        assert len(self) == 0
 
-        rewards, log_probs = [], []
-        for sample in self.storage:
-            rewards.append(sample[3])
-            log_probs.append(sample[4])
+    def add(self, reward, log_prob):
+        self.rewards.append(reward)
+        self.log_probs.append(log_prob)
 
-        return rewards, log_probs 
+    def get_trajectories(self):
+        assert len(self) != 0
+        return self.rewards, self.log_probs

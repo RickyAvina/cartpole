@@ -15,7 +15,7 @@ def main(args):
         os.makedirs("./logs")
     if not os.path.exists("./pytorch_models"):
         os.makedirs("./pytorch_models")
-    
+
     # Set logging
     log = set_log(args)
     tb_writer = SummaryWriter('./logs/tb_{0}'.format(args.log_name))
@@ -23,33 +23,35 @@ def main(args):
     # Create env
     env = make_env(args)
 
-    # Set seeds 0 seed is odd 
+    # Set seeds 0 seed is odd
     env.seed(args.seed)
     random.seed(args.seed)
     np.random.seed(args.seed)
-    torch.manual_seed(args.seed)    
-    
+    torch.manual_seed(args.seed)
+
     # Initialize policy
     agent = set_policy(env, args.n_hidden, tb_writer, log, args)
-    
+
     # load agent
-    if args.test == 1:
-        agent.load_weight("pytorch_models/", "wmodel1")
+    if args.mode == "test":
+        agent.load_weight("pytorch_models/", args.test_model)
         test(agent=agent, env=env, log=log, tb_writer=tb_writer, args=args)
     else:
-        train(agent=agent, env=env, log=log, tb_writer=tb_writer, args=args)
+        train(agent=agent, env=env, log=log, tb_writer=tb_writer,
+              num_samples=args.num_samples, args=args)
 
 
 def set_policy(env, n_hidden, tb_writer, log, args):
     from policy.agent import Agent
-    policy = Agent(env=env, n_hidden=n_hidden, tb_writer=tb_writer, log=log, args=args, name="SoftmaxAgent")
+    policy = Agent(env=env, n_hidden=n_hidden, tb_writer=tb_writer, log=log,
+                   args=args, name="SoftmaxAgent")
 
     return policy
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="")
-    
+
     # Algorithm arguments
     parser.add_argument(
         "--ep_max_timesteps", default=100, type=int,
@@ -63,7 +65,11 @@ if __name__ == "__main__":
     parser.add_argument(
         "--discount", default=0.99, type=float,
         help="Discount factor")
-    
+    parser.add_argument(
+       "--num_samples", default=1, type=int,
+       help="Number of samples to collect before\
+       updating policy")
+
     # Misc
     parser.add_argument(
         "--prefix", default="", type=str,
@@ -72,8 +78,11 @@ if __name__ == "__main__":
         "--seed", default=0, type=int,
         help="Sets Gym, PyTorch, and Numpy seeds")
     parser.add_argument(
-        "--test", default=0, type=int,
-        help="Test your policy")
+        "--mode", default="train", type=str,
+        help="Choose between training and testing")
+    parser.add_argument(
+        "--test_model", default="", type=str,
+        help="Specify model to test")
 
     args = parser.parse_args()
     args.log_name = "env::cartpole-v0-s_prefix::%s" % (args.prefix)

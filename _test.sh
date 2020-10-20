@@ -17,10 +17,10 @@ source venv/bin/activate
 pip3 install -r requirements.txt
 
 # Begin experiment
-print_header "Training network"
+print_header "Testing network"
+
 cd $DIR
 python3.6 main.py \
 --prefix "" \
---n_hidden 128 \
---mode "train" \
---num_samples 4
+--mode "test"\
+--test_model ""
