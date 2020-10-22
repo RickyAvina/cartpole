@@ -20,7 +20,7 @@ pip3 install -r requirements.txt
 print_header "Training network"
 cd $DIR
 python3.6 main.py \
---prefix "" \
+--prefix "samples-$1-" \
 --n_hidden 128 \
 --mode "train" \
---num_samples 4
+--num_samples $1 

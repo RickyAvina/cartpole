@@ -49,10 +49,12 @@ def train(agent, env, log, tb_writer, num_samples, args):
             agent.clear_memory()
 
         # Save model if we get expected reward
+        '''
         if (running_reward >= 195.0):
             agent.save_weight(os.getcwd() + "/pytorch_models/", "model"
                               + str(total_eps))
             print("Saved model {}!".format(total_eps))
+        '''
 
 
 def eval_progress(env, agent, n_eval, log, tb_writer, args):
